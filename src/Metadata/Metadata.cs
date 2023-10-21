@@ -8,6 +8,7 @@
 
         public string TableName => _tableName;
         public string[] Columns => _columns.Keys.ToArray();
+        public IDictionary<string, int[]> ColumnsWithValues => _columns;
 
         public Metadata(string tableName, IDictionary<string, int[]> columns, int tuplesCount)
         {

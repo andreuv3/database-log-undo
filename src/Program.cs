@@ -1,4 +1,5 @@
-﻿using Database.Log.Undo;
+﻿using System.Runtime.CompilerServices;
+using Database.Log.Undo;
 using Database.Log.Undo.Metadata;
 using Microsoft.Extensions.Configuration;
 
@@ -13,5 +14,6 @@ string connectionString = configuration.GetConnectionString("Undo")!;
 using var database = DatabaseFactory.BuildFromConnectionString(connectionString);
 await database.DropTableIfExistsAsync(metadata.TableName);
 await database.CreateTableAsync(metadata.TableName, metadata.Columns);
+await database.InsertAsync(metadata.TableName, metadata.ColumnsWithValues);
 
 Console.ReadKey();
