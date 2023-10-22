@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Log.Undo;
 
@@ -28,19 +29,16 @@ public class Metadata
 
         using var reader = new StreamReader(path);
         string json = reader.ReadToEnd();
-        dynamic data = JsonConvert.DeserializeObject(json)!;
-        // TODO: read data from metadata json file
         
-        string tableName = "test";
-        var columns = new Dictionary<string, int[]>
+        var data = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, int[]>>>(json);
+        if (data == null)
         {
-            { "id", new int[] { 1, 2, 3, 4 } },
-            { "A", new int[] { 20, 20, 1, 1 } },
-            { "B", new int[] { 55, 30, 1, 1 } },
-            { "C", new int[] { 55, 30, 1, 1 } },
-            { "D", new int[] { 55, 30, 1, 1 } },
-        };
-        int tuplesCount = 2;
+            throw new Exception("Não foi possível ler o arquivo de metadados");
+        }
+
+        string tableName = data.First().Key;
+        var columns = data.First().Value;
+        int tuplesCount = columns.First().Value.Length;
 
         return new Metadata(tableName, columns, tuplesCount);
     }
