@@ -18,6 +18,7 @@ try
 
     string? logFilePath = configuration["LogFilePath"];
     var log = UndoLog.Create(logFilePath, database);
+    log.PerformUndo();
 }
 catch (Exception ex)
 {
