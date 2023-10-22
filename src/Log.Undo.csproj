@@ -15,13 +15,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
+    <None Update="assets/appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="entradaLog">
+    <None Update="assets/entradaLog">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="metadado.json">
+    <None Update="assets/metadado.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

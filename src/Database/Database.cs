@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using Npgsql;
 
-namespace Database.Log.Undo;
+namespace Log.Undo;
 
 public class Database : IDisposable
 {
@@ -65,5 +65,16 @@ public class Database : IDisposable
         }
         
         _connection.Dispose();
+    }
+
+    public static Database CreateFromConnectionString(string connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new Exception("String de conexão não encontrada");
+        }
+
+        var connection = new NpgsqlConnection(connectionString);
+        return new Database(connection);
     }
 }
