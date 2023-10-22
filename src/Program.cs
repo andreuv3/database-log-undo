@@ -12,12 +12,12 @@ try
 
     string? connectionString = configuration.GetConnectionString("Undo");
     using var database = Database.CreateFromConnectionString(connectionString);
-    await database.DropTableIfExistsAsync(metadata.TableName);
-    await database.CreateTableAsync(metadata.TableName, metadata.Columns);
-    await database.InsertAsync(metadata.TableName, metadata.ColumnsWithValues);
+    database.DropTableIfExists(metadata.TableName);
+    database.CreateTable(metadata.TableName, metadata.Columns);
+    database.Insert(metadata.TableName, metadata.ColumnsWithValues);
 
     string? logFilePath = configuration["LogFilePath"];
-    var log = UndoLog.Create(logFilePath, database);
+    var log = UndoLog.Create(logFilePath, database, metadata);
     log.PerformUndo();
 }
 catch (Exception ex)

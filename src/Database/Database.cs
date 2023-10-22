@@ -18,28 +18,25 @@ public class Database : IDisposable
         _connection.Open();
     }
 
-    public async Task DropTableIfExistsAsync(string tableName)
+    public void DropTableIfExists(string tableName)
     {
         string sql = $"DROP TABLE IF EXISTS {tableName};";
-        using var command = new NpgsqlCommand(sql, _connection);
-        await command.ExecuteNonQueryAsync();
+        Execute(sql);
     }
 
-    public async Task CreateTableAsync(string table, string[] columns)
+    public void CreateTable(string table, string[] columns)
     {
         string columnsAsText = string.Join(',', columns.Select(c => $"{c} INTEGER"));
         string sql = $"CREATE TABLE {table} ({columnsAsText});";
-        using var command = new NpgsqlCommand(sql, _connection);
-        await command.ExecuteNonQueryAsync();
+        Execute(sql);
     }
 
-    public async Task InsertAsync(string table, IDictionary<string, int[]> columns)
+    public void Insert(string table, IDictionary<string, int[]> columns)
     {
         string columnsAsText = string.Join(',', columns.Keys);
         string valuesAsText = BuildValuesAsText(columns);
         string sql = $"INSERT INTO {table} ({columnsAsText}) VALUES {valuesAsText};";
-        using var command = new NpgsqlCommand(sql, _connection);
-        await command.ExecuteNonQueryAsync();
+        Execute(sql);
     }
 
     private string BuildValuesAsText(IDictionary<string, int[]> columns)
@@ -55,6 +52,27 @@ public class Database : IDisposable
             values[i] = $"({string.Join(',', tupleValues)})";
         }
         return string.Join(',', values);
+    }
+
+    public void Update(string table, string column, int value, int id)
+    {
+        string update = $"UPDATE {table} SET {column} = {value} WHERE id = {id};";
+        Execute(update);
+    }
+
+    private void Execute(string sql)
+    {
+        using var command = new NpgsqlCommand(sql, _connection);
+        command.ExecuteNonQuery();
+    }
+
+    public int Select(string table, string column, int id)
+    {
+        string sql = $"SELECT {column} FROM {table} WHERE id = {id};";
+        using var command = new NpgsqlCommand(sql, _connection);
+        using var reader = command.ExecuteReader(CommandBehavior.SingleRow);
+        reader.Read();
+        return reader.GetInt32(column);
     }
 
     public void Dispose()

@@ -10,19 +10,22 @@ public class UndoLog
     private const string OperationPattern = @"<(\w+),(\d+),(\w+),(\d+)>";
 
     private readonly string[] _lines;
-    private readonly Database _database;
     private readonly ICollection<Transaction> _transactions;
+    private readonly Database _database;
+    private readonly Metadata _metadata;
 
-    public UndoLog(string[] lines, Database database)
+    public UndoLog(string[] lines, Database database, Metadata metadata)
     {
         _lines = lines;
-        _database = database;
         _transactions = new List<Transaction>();
+        _database = database;
+        _metadata = metadata;
     }
 
     public void PerformUndo()
     {
         ParseLog();
+        UndoUncommitedTransactions();
     }
 
     private void ParseLog()
@@ -61,7 +64,29 @@ public class UndoLog
         }
     }
 
-    public static UndoLog Create(string logFilePath, Database database)
+    private void UndoUncommitedTransactions()
+    {
+        var uncommitedTransactions = _transactions
+            .Where(t => !t.Commited)
+            .ToList();
+
+        foreach (var transaction in uncommitedTransactions)
+        {
+            Console.WriteLine($"A transação {transaction.Id} está realizando UNDO");
+            foreach (var operation in transaction.Operations)
+            {
+                int value = _database.Select(_metadata.TableName, operation.ColumnName, operation.TupleId);
+                if (value != operation.OldValue)
+                {
+                    _database.Update(_metadata.TableName, operation.ColumnName, operation.OldValue, operation.TupleId);
+                    Console.WriteLine($"Atualização na tabela {_metadata.TableName} na tupla id {operation.TupleId}: coluna {operation.ColumnName} foi revertida de {value} para {operation.OldValue}");
+                }
+            }
+            Console.WriteLine($"UNDO da transazação {transaction.Id} finalizado");
+        }
+    }
+
+    public static UndoLog Create(string logFilePath, Database database, Metadata metadata)
     {
         if (string.IsNullOrWhiteSpace(logFilePath))
         {
@@ -73,11 +98,16 @@ public class UndoLog
             throw new ArgumentNullException("Banco de dados não informado");
         }
 
+        if (metadata == null)
+        {
+            throw new ArgumentNullException("Metadados não informados");
+        }
+
         using var reader = new StreamReader(logFilePath);
         string[] lines = reader
             .ReadToEnd()
             .Split("\n");
 
-        return new UndoLog(lines, database);
+        return new UndoLog(lines, database, metadata);
     }
 }
