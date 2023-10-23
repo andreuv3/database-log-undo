@@ -136,13 +136,14 @@ cd database-log-undo
 dotnet build
 ```
 
-7. Execute o projeto
+7. Navegue até o diretório src
 
 ```
 cd src
-dotnet run
 ```
 
+8. Execute o projeto
 
-O caminho para ambos arquivos deve ser configurado no arquivo [appsettings.json](src/assets/appsettings.json).
-
+```
+dotnet run
+```
