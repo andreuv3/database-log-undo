@@ -38,7 +38,7 @@ Checkpoint iniciado
 <START CKPT(IDS_DAS_TRANSACOES_EM_ABERTO)>
 ```
 
-Observação: os ids devem ser separados por vírgulas.
+> Observação: os ids devem ser separados por vírgulas. Por exemplo: ```<START CKPT(T1,T2,T3)>```
 
 Checkpoint finalizado
 ```
