@@ -28,6 +28,8 @@ public class UndoLog
     public void PerformUndo()
     {
         ParseLog();
+        RemoveCommitedTransactions();
+        RemoveOperationsFromCommitedTransactions();
         UndoUncommitedTransactions();
     }
 
@@ -41,7 +43,7 @@ public class UndoLog
             {
                 break;
             }
-            
+
             var match = Regex.Match(line, StartCheckpointPattern);
             if (match.Success && !foundLastCheckpoint)
             {
@@ -92,16 +94,19 @@ public class UndoLog
                 continue;
             }
         }
+    }
 
+    private void RemoveCommitedTransactions()
+    {
         _transactions = _transactions
-            .Where(t => !t.Commited)
-            .ToList();
-        var uncommitedTransactionIds = _transactions
-            .Select(t => t.Id)
-            .ToList();
+                    .Where(t => !t.Commited)
+                    .ToList();
+    }
 
+    private void RemoveOperationsFromCommitedTransactions()
+    {
         _operations = _operations
-            .Where(o => uncommitedTransactionIds.Contains(o.TransactionId))
+            .Where(o => _transactions.Select(t => t.Id).Contains(o.TransactionId))
             .ToList();
     }
 

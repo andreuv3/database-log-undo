@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Microsoft.VisualBasic;
 using Npgsql;
 
 namespace Log.Undo;
@@ -73,6 +74,25 @@ public class Database : IDisposable
         using var reader = command.ExecuteReader(CommandBehavior.SingleRow);
         reader.Read();
         return reader.GetInt32(column);
+    }
+
+    public void SelectAndPrint(string table, string[] columns)
+    {
+        string columnsAsText = string.Join(",", columns);
+        string sql = $"SELECT {columnsAsText} FROM {table}";
+        using var command = new NpgsqlCommand(sql, _connection);
+        using var reader = command.ExecuteReader();
+        
+        Console.WriteLine($"{string.Join("\t", columns)}");
+        while (reader.Read())
+        {
+            for (int i = 0; i < columns.Length; i++)
+            {
+                int value = reader.GetInt32(i);
+                Console.Write($"{value}\t");
+            }
+            Console.WriteLine();
+        }
     }
 
     public void Dispose()
