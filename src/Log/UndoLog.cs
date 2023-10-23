@@ -99,8 +99,8 @@ public class UndoLog
     private void RemoveCommitedTransactions()
     {
         _transactions = _transactions
-                    .Where(t => !t.Commited)
-                    .ToList();
+            .Where(t => !t.Commited)
+            .ToList();
     }
 
     private void RemoveOperationsFromCommitedTransactions()

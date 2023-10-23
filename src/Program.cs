@@ -4,14 +4,15 @@ using Microsoft.Extensions.Configuration;
 try
 {
     var configuration = new ConfigurationBuilder()
-        .AddJsonFile("assets/appsettings.json", false, false)
+        .AddJsonFile("appsettings.json", false, false)
         .Build();
 
-    string? metadataFilePath = configuration["MetadataFilePath"];
-    string? logFilePath = configuration["LogFilePath"];
-    string? connectionString = configuration.GetConnectionString("Undo");
+    string metadataFilePath = "metadado.json";
+    string logFilePath = "entradaLog";
+    string connectionString = configuration.GetConnectionString("Undo")!;
 
     var metadata = Metadata.CreateFromJsonFile(metadataFilePath);
+
     using var database = Database.CreateFromConnectionString(connectionString);
     database.DropTableIfExists(metadata.TableName);
     database.CreateTable(metadata.TableName, metadata.Columns);
