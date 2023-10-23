@@ -4,11 +4,11 @@ O objetivo deste projeto é implementar um mecanismo de log undo com checkpoints
 
 ## Funcionalidades
 
-O projeto é capaz de ler um arquivo de log e um arquivo de metadados e validar as informações no banco de dados através do mecanismo undo.
+O projeto é capaz de ler um [arquivo de log](src/entradaLog) e um [arquivo de metadados](src/metadado.json) e validar as informações no banco de dados através do mecanismo undo.
 
 ### Detalhes da implementação
 
-O programa executa os seguintes passos para implementar o mecanismo de log undo:
+O programa executa os seguintes passos:
 
 1. Remove a tabela do banco de dados, caso exista;
 2. Cria a tabela no banco dados baseado na definição do arquivo de metadados;
@@ -66,6 +66,8 @@ Um exemplo de arquivo de log:
 <T4,1, B,55>
 ```
 
+> O arquivo de log está localizado [aqui](src/entradaLog).
+
 ## Arquivo de metadados
 
 O arquivo de metadados deve conter o nome da tabela, seguindo do nome das colunas e o valor (número inteiro) de cada coluna para cada tupla. Mais precisamente, deve obedecer o seguinte formato:
@@ -98,6 +100,8 @@ O exemplo acima equivale a uma tabela chamada "test" com os seguintes dados:
 |----|----|----|
 | 1  | 20 | 55 |
 | 2  | 20 | 30 |
+
+> O arquivo de metadados está localizado [aqui](src/metadado.json).
 
 ## Executando a aplicação
 
