@@ -70,7 +70,7 @@ Um exemplo de arquivo de log:
 
 ## Arquivo de metadados
 
-O arquivo de metadados deve conter o nome da tabela, seguindo do nome das colunas e o valor (número inteiro) de cada coluna para cada tupla. Mais precisamente, deve obedecer o seguinte formato:
+O arquivo de metadados deve conter o nome da tabela, seguido do nome das colunas e o valor (número inteiro) de cada coluna para cada tupla. Mais precisamente, deve obedecer o seguinte formato:
 
 ```
 {
