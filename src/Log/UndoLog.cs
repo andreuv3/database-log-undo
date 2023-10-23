@@ -8,16 +8,19 @@ public class UndoLog
     private const string StartTransactionPattern = @"<start (\w+)>";
     private const string CommitTransactionPattern = @"<commit (\w+)>";
     private const string OperationPattern = @"<(\w+),(\d+),(\w+),(\d+)>";
+    private const string StartCheckpointPattern = @"<START CKPT\(([^)]+)\)>";
 
     private readonly string[] _lines;
-    private readonly ICollection<Transaction> _transactions;
     private readonly Database _database;
     private readonly Metadata _metadata;
+    private ICollection<Transaction> _transactions;
+    private ICollection<Operation> _operations;
 
     public UndoLog(string[] lines, Database database, Metadata metadata)
     {
         _lines = lines;
         _transactions = new List<Transaction>();
+        _operations = new List<Operation>();
         _database = database;
         _metadata = metadata;
     }
@@ -30,14 +33,41 @@ public class UndoLog
 
     private void ParseLog()
     {
-        foreach (var line in _lines)
+        bool foundLastCheckpoint = false;
+        var checkpointTransactions = new Dictionary<string, bool>();
+        foreach (var line in _lines.Reverse())
         {
-            var match = Regex.Match(line, StartTransactionPattern);
+            if (foundLastCheckpoint && checkpointTransactions.All(t => t.Value))
+            {
+                break;
+            }
+            
+            var match = Regex.Match(line, StartCheckpointPattern);
+            if (match.Success && !foundLastCheckpoint)
+            {
+                foundLastCheckpoint = true;
+                foreach (var transactionId in match.Groups[1].Value.Split(','))
+                {
+                    checkpointTransactions.Add(transactionId, false);
+                }
+                continue;
+            }
+
+            match = Regex.Match(line, StartTransactionPattern);
             if (match.Success)
             {
                 string transactionId = match.Groups[1].Value;
-                var transaction = new Transaction(transactionId);
-                _transactions.Add(transaction);
+                var transaction = _transactions.FirstOrDefault(t => t.Id == transactionId);
+                if (transaction == null)
+                {
+                    transaction = new Transaction(transactionId);
+                    _transactions.Add(transaction);
+                }
+
+                if (checkpointTransactions.ContainsKey(transactionId))
+                {
+                    checkpointTransactions[transactionId] = true;
+                }
                 continue;
             }
 
@@ -45,8 +75,8 @@ public class UndoLog
             if (match.Success)
             {
                 string transactionId = match.Groups[1].Value;
-                var transaction = _transactions.First(t => t.Id == transactionId);
-                transaction.Commit();
+                var transaction = new Transaction(transactionId, true);
+                _transactions.Add(transaction);
                 continue;
             }
 
@@ -58,31 +88,36 @@ public class UndoLog
                 string columnName = match.Groups[3].Value;
                 int oldValue = int.Parse(match.Groups[4].Value);
                 var operation = new Operation(transactionId, tupleId, columnName, oldValue);
-                var transaction = _transactions.First(t => t.Id == operation.TransactionId);
-                transaction.AddOperation(operation);
+                _operations.Add(operation);
+                continue;
             }
         }
+
+        _transactions = _transactions
+            .Where(t => !t.Commited)
+            .ToList();
+        var uncommitedTransactionIds = _transactions
+            .Select(t => t.Id)
+            .ToList();
+
+        _operations = _operations
+            .Where(o => uncommitedTransactionIds.Contains(o.TransactionId))
+            .ToList();
     }
 
     private void UndoUncommitedTransactions()
     {
-        var uncommitedTransactions = _transactions
-            .Where(t => !t.Commited)
-            .ToList();
-
-        foreach (var transaction in uncommitedTransactions)
+        foreach (var transaction in _transactions)
         {
-            Console.WriteLine($"A transação {transaction.Id} está realizando UNDO");
-            foreach (var operation in transaction.Operations)
+            foreach (var operation in _operations.Where(o => o.TransactionId == transaction.Id))
             {
                 int value = _database.Select(_metadata.TableName, operation.ColumnName, operation.TupleId);
                 if (value != operation.OldValue)
                 {
                     _database.Update(_metadata.TableName, operation.ColumnName, operation.OldValue, operation.TupleId);
-                    Console.WriteLine($"Atualização na tabela {_metadata.TableName} na tupla id {operation.TupleId}: coluna {operation.ColumnName} foi revertida de {value} para {operation.OldValue}");
                 }
             }
-            Console.WriteLine($"UNDO da transazação {transaction.Id} finalizado");
+            Console.WriteLine($"A transação {transaction.Id} realizou UNDO");
         }
     }
 
